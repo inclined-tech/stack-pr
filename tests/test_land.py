@@ -47,6 +47,13 @@ def test_land_rebases_current_branch_onto_updated_stack_tip(
     monkeypatch.setattr(cli, "branch_exists", lambda branch: False)
     monkeypatch.setattr(
         cli,
+        "get_command_output",
+        lambda cmd, **kwargs: "rebased-stack-tip\n"
+        if cmd == ["git", "rev-parse", "stack/2"]
+        else "",
+    )
+    monkeypatch.setattr(
+        cli,
         "is_ancestor",
         lambda ancestor, descendant, *, verbose: ancestor == "commit-2"
         and descendant == "feature",
@@ -60,7 +67,14 @@ def test_land_rebases_current_branch_onto_updated_stack_tip(
 
     cli.command_land(make_args())
 
-    assert ["git", "rebase", "stack/2", "feature", "--committer-date-is-author-date"] in commands
+    assert [
+        "git",
+        "rebase",
+        "rebased-stack-tip",
+        "feature",
+        "--committer-date-is-author-date",
+    ] in commands
+    assert ["git", "rebase", "stack/2", "feature", "--committer-date-is-author-date"] not in commands
     assert ["git", "rebase", "origin/main", "feature"] not in commands
 
 

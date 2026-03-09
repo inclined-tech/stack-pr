@@ -1313,7 +1313,11 @@ def command_land(args: CommonArgs) -> None:
         for e in prs_to_rebase:
             rebase_pr(e, remote=args.remote, target=args.target, verbose=args.verbose)
 
-        current_branch_base = prs_to_rebase[-1].head
+        # Resolve the rewritten tip to a commit hash before the local stack
+        # branches are deleted below.
+        current_branch_base = get_command_output(
+            ["git", "rev-parse", prs_to_rebase[-1].head]
+        ).strip()
 
         # Change the target of the new bottom-most PR in the stack to 'target'
         run_shell_command(
